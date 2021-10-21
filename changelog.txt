@@ -1,0 +1,4 @@
+1.0.1
+* Changed sharp for jimp library. jimp is javascript native library.
+  -> Sharp should be compiled in destination machine and this involves some deployments problems when using
+  differents node versiones.

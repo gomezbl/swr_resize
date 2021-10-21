@@ -1,10 +1,9 @@
 "use strict";
 
-var sizeOf = require('image-size');
-const Sharp = require("sharp");
+const Jimp = require("jimp");
+var SizeOfImage = require('image-size');
 
 module.exports = {};
-
 module.exports.swr = {};
 
 module.exports.swr.info = function() {
@@ -20,62 +19,58 @@ module.exports.swr.info = function() {
         example: "w(340)"
     }
 }
+        
+module.exports.swr.perform = async function(params) {
+    const originalImageSize = await getImageSize(params.sourceEntity);
+    const finalSize = getFinalSize(originalImageSize, params.w, params.h);
 
-var imageSize = function(fullPathToImage) {
+    // Perform the resize
+    const image = await Jimp.read(params.sourceEntity);
+    await image.resize(parseInt(finalSize.finalWidth), parseInt(finalSize.finalHeight));
+    await image.writeAsync(params.destEntity);
+}
+
+function getImageSize(fullPathToImage) {
     return new Promise((resolve, reject) => {
-        sizeOf(fullPathToImage, (err, dimensions) => {
+        SizeOfImage(fullPathToImage, (err, dimensions) => {
             if (!!err) reject(err);
             else resolve(dimensions);
         });
     });
 }
 
-module.exports.swr.perform = function(params) {
-    return new Promise((resolve, reject) => {
-        imageSize(params.sourceEntity)
-            .then((originalImageSize) => {
-                let finalWidth = 0;
-                let finalHeight = 0;
-                let destWidth = params.w;
-                let destHeight = params.h;
-                let resizeOption = "";
+function getFinalSize(originalImageSize, destWidth, destHeight) {
+    let finalWidth, finalHeight;
 
-                // Case 1) - destination width set, but no height
-                if (destWidth && !destHeight) {
-                    finalWidth = destWidth;
-                    let ratio = originalImageSize.width / destWidth;
-                    finalHeight = originalImageSize.height / ratio;
-                }
+    // Case 1) - destination width set, but no height
+    if (destWidth && !destHeight) {
+        finalWidth = destWidth;
+        const ratio = originalImageSize.width / destWidth;
+        finalHeight = originalImageSize.height / ratio;
+    }
 
-                // Case 2) - destination height set, but no width
-                if (!destWidth && destHeight) {
-                    finalHeight = destHeight;
-                    let ratio = originalImageSize.height / destHeight;
-                    finalWidth = originalImageSize.width / ratio;
-                }
+    // Case 2) - destination height set, but no width
+    if (!destWidth && destHeight) {
+        finalHeight = destHeight;
+        const ratio = originalImageSize.height / destHeight;
+        finalWidth = originalImageSize.width / ratio;
+    }
 
-                // Case 3) - no destination width or height set, then set with to DEFAULTWIDTH
-                if (!destWidth && !destHeight) {
-                    finalWidth = destWidth;
-                    let ratio = originalImageSize.width / destWidth;
-                    finalHeight = originalImageSize.height / ratio;
-                }
+    // Case 3) - no destination width or height set, then set with to DEFAULTWIDTH
+    if (!destWidth && !destHeight) {
+        finalWidth = destWidth;
+        const ratio = originalImageSize.width / destWidth;
+        finalHeight = originalImageSize.height / ratio;
+    }
 
-                // Case 4) - destination width and height set
-                if (destWidth && destHeight) {
-                    finalWidth = destWidth;
-                    finalHeight = destHeight;
-                    resizeOption = "!";
-                }
+    // Case 4) - destination width and height set
+    if (destWidth && destHeight) {
+        finalWidth = destWidth;
+        finalHeight = destHeight;
+    }
 
-                Sharp(params.sourceEntity)
-                    .resize(parseInt(finalWidth), parseInt(finalHeight))
-                    .toFile(params.destEntity, (err) => { 
-                        if (!!err) { reject(err); } else {
-                            resolve();
-                        }
-                    });
-            })
-            .catch((err) => { reject(err); })
-    })
+    return {
+        finalWidth: finalWidth,
+        finalHeight: finalHeight
+    }
 }

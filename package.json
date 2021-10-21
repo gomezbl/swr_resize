@@ -1,6 +1,6 @@
 {
   "name": "swr_resize",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Smart Web Resource for resizing images",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "sharp": "^0.23.2"
+    "jimp": "^0.16.1"
   }
 }
